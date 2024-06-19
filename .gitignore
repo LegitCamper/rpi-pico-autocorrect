@@ -3,4 +3,4 @@
 .gdb_history
 Cargo.lock
 target/
-bk-tree.rs
+tree.rs

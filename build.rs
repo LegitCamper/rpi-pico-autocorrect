@@ -10,7 +10,7 @@
 
 use bk_tree::{metrics, BKTree};
 use build_const::ConstWriter;
-use std::{env, fs::File, io::Write, path::Path, path::PathBuf};
+use std::{env, fs::File, io::Write, path::PathBuf};
 
 fn main() {
     // Generate BkTree dictionary
@@ -33,25 +33,21 @@ fn main() {
 }
 
 fn create_bktree() {
-    let mut tree: BKTree<&str> = BKTree::new(metrics::Levenshtein);
+    let mut consts = ConstWriter::for_build("tree").unwrap();
+    consts.add_dependency("hashbrown::HashMap");
+    consts.add_dependency("bk_tree::metrics::Levenshtein");
+    // finish dependencies and starting writing constants
+    let mut consts = consts.finish_dependencies();
 
+    let mut tree: BKTree<&str> = BKTree::new(metrics::Levenshtein);
     tree.add("foo");
     tree.add("bar");
     tree.add("baz");
     tree.add("bup");
 
-    let path = &Path::new(build_const::src_file!("bk-tree.rs"));
-    if !path.exists() {
-        File::create(path);
-    };
-    let mut consts = ConstWriter::from_path(path).unwrap();
-
-    consts.add_dependency("bk_tree::BKTree");
-    consts.add_dependency("bk_tree::Levenshtein");
-
-    // finish dependencies and starting writing constants
-    let mut consts = consts.finish_dependencies();
-
-    // add an array of values
-    consts.add_value("Tree", "BKTree<Levenshtein>", tree);
+    if let Some(root) = tree.root {
+        consts.add_value("TREE", "BKNode<Levenshtein>", root);
+    } else {
+        consts.add_value("TREE", "BKTree<Levenshtein>", tree);
+    }
 }

@@ -4,11 +4,17 @@
 #![no_std]
 #![no_main]
 
+extern crate alloc;
+
 use bsp::entry;
 use defmt::*;
 use defmt_rtt as _;
+use embedded_alloc::Heap;
 use embedded_hal::digital::OutputPin;
 use panic_probe as _;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 // Provide an alias for our BSP so we can switch targets quickly.
 // Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
@@ -22,12 +28,13 @@ use bsp::hal::{
     watchdog::Watchdog,
 };
 
+use bk_tree::BKTree;
+
+// This imports TREE
 #[macro_use]
 extern crate build_const;
 
-use bk_tree::BKTree;
-
-build_const!("bk-tree");
+build_const!("tree");
 
 #[entry]
 fn main() -> ! {
