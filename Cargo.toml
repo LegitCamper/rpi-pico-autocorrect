@@ -4,6 +4,9 @@ name = "rpi-pico-autocorrect"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
+[toolchain]
+channel = "nightly"
+
 [dependencies]
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
@@ -32,6 +35,9 @@ hashbrown = "0.14.5"
 bk-tree = { git = "https://github.com/LegitCamper/rust-bk-tree.git" }
 build_const = "0.2.2"
 triple_accel = "0.4.0"
+
+[dev-dependencies]
+embedded-test = { version = "0.4.0", features = ["init-log"] }
 
 # cargo build/run
 [profile.dev]

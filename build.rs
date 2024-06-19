@@ -8,36 +8,36 @@
 //! updating `memory.x` ensures a rebuild of the application with the
 //! new memory settings.
 
-use bk_tree::{metrics, BKTree};
-use build_const::ConstWriter;
-use std::{env, fs::File, io::Write, path::PathBuf};
+use bk_tree::{metrics, BKNode, BKTree};
+use std::{
+    env,
+    fmt::{Debug, Display},
+    fs::File,
+    io::Write,
+    path::PathBuf,
+};
 
 fn main() {
-    // Generate BkTree dictionary
-    create_bktree();
+    let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
-    let out = &PathBuf::from(env::var("OUT_DIR").unwrap());
+    // Generate BkTree dictionary
+    create_bktree(out.clone());
 
     File::create(out.join("memory.x"))
         .unwrap()
         .write_all(include_bytes!("memory.x"))
         .unwrap();
-    println!("cargo:rustc-link-search={}", out.display());
 
-    // By default, Cargo will re-run a build script whenever
-    // any file in the project changes. By specifying `memory.x`
-    // here, we ensure the build script is only re-run when
-    // `memory.x` is changed.
+    println!("cargo:rustc-link-search={}", out.display());
     println!("cargo:rerun-if-changed=memory.x");
     println!("cargo:rerun-if-changed=dict.txt");
 }
 
-fn create_bktree() {
-    let mut consts = ConstWriter::for_build("tree").unwrap();
-    consts.add_dependency("hashbrown::HashMap");
-    consts.add_dependency("bk_tree::metrics::Levenshtein");
-    // finish dependencies and starting writing constants
-    let mut consts = consts.finish_dependencies();
+fn create_bktree(out: PathBuf) {
+    let mut contents = String::new();
+    contents.push_str("hashbrown::HashMap\n");
+    contents.push_str("bk_tree::BKNode\n");
+    contents.push_str("bk_tree::metrics::Levenshtein\n");
 
     let mut tree: BKTree<&str> = BKTree::new(metrics::Levenshtein);
     tree.add("foo");
@@ -45,9 +45,20 @@ fn create_bktree() {
     tree.add("baz");
     tree.add("bup");
 
-    if let Some(root) = tree.root {
-        consts.add_value("TREE", "BKNode<Levenshtein>", root);
-    } else {
-        consts.add_value("TREE", "BKTree<Levenshtein>", tree);
+    fn tree_iter<K: Debug + Display>(file: &mut String, node: &BKNode<K>) {
+        for node in node.children.iter() {
+            tree_iter(file, node.1);
+        }
+
+        file.push_str(format!("const {} BKNode {{ key: {}, children: HashMap::default(), max_child_distance: None }};\n", 
+            format!("_{}", node.key.to_string().to_uppercase()), node.key).as_str());
+
+        // make sure to push tld nodes to other vec and push them here
     }
+
+    tree_iter(&mut contents, &tree.root.unwrap());
+    File::create(out.join("tree.rs"))
+        .unwrap()
+        .write_all(contents.as_bytes())
+        .unwrap();
 }
