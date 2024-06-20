@@ -23,6 +23,7 @@ use rp_pico as bsp;
 
 use bsp::hal::{
     clocks::{init_clocks_and_plls, Clock},
+    gpio::{self, Pin},
     pac,
     sio::Sio,
     watchdog::Watchdog,
@@ -64,25 +65,20 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // This is the correct pin on the Raspberry Pico board. On other boards, even if they have an
-    // on-board LED, it might need to be changed.
-    //
-    // Notably, on the Pico W, the LED is not connected to any of the RP2040 GPIOs but to the cyw43 module instead.
-    // One way to do that is by using [embassy](https://github.com/embassy-rs/embassy/blob/main/examples/rp/src/bin/wifi_blinky.rs)
-    //
-    // If you have a Pico W and want to toggle a LED with a simple GPIO output pin, you can connect an external
-    // LED to one of the GPIO pins, and reference that pin here. Don't forget adding an appropriate resistor
-    // in series with the LED.
     let mut led_pin = pins.led.into_push_pull_output();
 
     loop {
-        info!("on!");
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        info!("off!");
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+        for node in TREE.children.iter() {
+            if let Some(node) = node {
+                let len = node.word.len() as u32 * 100;
+
+                info!("on!");
+                led_pin.set_high().unwrap();
+                delay.delay_ms(len);
+                info!("off!");
+                led_pin.set_low().unwrap();
+                delay.delay_ms(len);
+            }
+        }
     }
 }
-
-// End of file
