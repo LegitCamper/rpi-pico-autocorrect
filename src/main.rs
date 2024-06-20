@@ -28,13 +28,10 @@ use bsp::hal::{
     watchdog::Watchdog,
 };
 
-use bk_tree::BKTree;
+use embedded_bktree::Node;
 
-// This imports TREE
-#[macro_use]
-extern crate build_const;
-
-build_const!("tree");
+// this imports the TREE
+include!(concat!(env!("OUT_DIR"), "/tree.rs"));
 
 #[entry]
 fn main() -> ! {

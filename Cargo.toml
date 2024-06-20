@@ -27,14 +27,12 @@ rp-pico = "0.9"
 # rp2040-hal = { version="0.10", features=["rt", "critical-section-impl"] }
 # rp2040-boot2 = "0.2"
 
-build_const = { version = "0.2.2", default-features = false }
-bk-tree = { git = "https://github.com/LegitCamper/rust-bk-tree.git" }
-hashbrown = "0.14.5"
+embedded-bktree = { path = "../embedded-bktree" }
 
 [build-dependencies]
-bk-tree = { git = "https://github.com/LegitCamper/rust-bk-tree.git" }
-build_const = "0.2.2"
-triple_accel = "0.4.0"
+embedded-bktree = { path = "../embedded-bktree", default-features = false, features = [
+  "write",
+] }
 
 [dev-dependencies]
 embedded-test = { version = "0.4.0", features = ["init-log"] }
