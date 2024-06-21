@@ -28,6 +28,8 @@ rp-pico = "0.9"
 # rp2040-boot2 = "0.2"
 
 embedded-bktree = { path = "../embedded-bktree" }
+usb-device = "0.3.2"
+usbd-hid = "0.7.0"
 
 [build-dependencies]
 embedded-bktree = { path = "../embedded-bktree", default-features = false, features = [
