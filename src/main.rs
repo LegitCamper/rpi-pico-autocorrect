@@ -10,6 +10,7 @@ use rp_pico as bsp;
 // use sparkfun_pro_micro_rp2040 as bsp;
 
 pub mod device;
+use device::{Device, KeyboardReport};
 
 // this imports the TREE
 use embedded_bktree::Node;
@@ -17,5 +18,47 @@ include!(concat!(env!("OUT_DIR"), "/tree.rs"));
 
 #[bsp::entry]
 fn main() -> ! {
-    loop {}
+    let mut device = Device::new();
+
+    loop {
+        device
+            .push_keyboard_report(device.get_key_rep(0x0B))
+            .unwrap(); // H
+        device
+            .push_keyboard_report(device.get_key_rep(0x08))
+            .unwrap(); // E
+        device
+            .push_keyboard_report(device.get_key_rep(0x0F))
+            .unwrap(); // L
+        device
+            .push_keyboard_report(device.get_key_rep(0x0F))
+            .unwrap(); // L
+        device
+            .push_keyboard_report(device.get_key_rep(0x12))
+            .unwrap(); // O
+        device
+            .push_keyboard_report(device.get_key_rep(0x2C))
+            .unwrap(); // _
+        device
+            .push_keyboard_report(device.get_key_rep(0x1A))
+            .unwrap(); // W
+        device
+            .push_keyboard_report(device.get_key_rep(0x12))
+            .unwrap(); // O
+        device
+            .push_keyboard_report(device.get_key_rep(0x15))
+            .unwrap(); // R
+        device
+            .push_keyboard_report(device.get_key_rep(0x0F))
+            .unwrap(); // L
+        device
+            .push_keyboard_report(device.get_key_rep(0x07))
+            .unwrap(); // D
+        for _ in 0..11 {
+            device
+                .push_keyboard_report(device.get_key_rep(0x2A))
+                .unwrap(); // Back
+        }
+        device.blink_led_once(3000);
+    }
 }

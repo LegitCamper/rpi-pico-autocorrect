@@ -12,13 +12,14 @@ cortex-m = "0.7"
 cortex-m-rt = "0.7"
 embedded-hal = { version = "1.0.0" }
 embedded-alloc = { version = "0.5.1", feature = "llff" }
-
+critical-section = { version = "1.0.0" }
 defmt = "0.3"
 defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
+usb-device = "0.3.2"
+usbd-hid = "0.7.0"
 
-# We're using a Pico by default on this template
-rp-pico = "0.9"
+rp-pico = { version = "0.9", featrues = ["critical-section-impl", "rt"] }
 
 # but you can use any BSP. Uncomment this to use the pro_micro_rp2040 BSP instead
 # sparkfun-pro-micro-rp2040 = "0.8"
@@ -27,12 +28,13 @@ rp-pico = "0.9"
 # rp2040-hal = { version="0.10", features=["rt", "critical-section-impl"] }
 # rp2040-boot2 = "0.2"
 
-embedded-bktree = { path = "../embedded-bktree" }
-usb-device = "0.3.2"
-usbd-hid = "0.7.0"
+# keebrs = { git = "https://gitlab.com/polymer-kb/firmware/keebrs" }
+embedded-bktree = { git = "https://github.com/LegitCamper/embedded-bktree", features = [
+  "read",
+] }
 
 [build-dependencies]
-embedded-bktree = { path = "../embedded-bktree", default-features = false, features = [
+embedded-bktree = { git = "https://github.com/LegitCamper/embedded-bktree", features = [
   "write",
 ] }
 

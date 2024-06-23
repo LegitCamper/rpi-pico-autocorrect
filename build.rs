@@ -10,12 +10,10 @@
 
 use embedded_bktree::write_bktree;
 use std::{
-    convert::AsRef,
     env,
-    fmt::{Debug, Display},
     fs::File,
-    io::{BufRead, BufReader, Lines, Write},
-    path::{Path, PathBuf},
+    io::{BufRead, BufReader, Write},
+    path::PathBuf,
 };
 
 fn lines_from_file(filename: &str) -> Vec<String> {
@@ -35,7 +33,7 @@ fn main() {
     dict.remove(dict.len() - 1);
     let mut dict = dict.iter().map(|w| w.as_str()).collect();
 
-    write_bktree("tree.rs", &mut dict);
+    write_bktree(None, &mut dict);
 
     let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
     File::create(out.join("memory.x"))
