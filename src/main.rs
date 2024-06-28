@@ -6,7 +6,11 @@ use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
 use embassy_sync::channel::{Channel, Sender};
 use embassy_time::Timer;
-use keycode::{KeyMap, KeyMapping, KeyMappingId, KeyState, KeyboardState};
+use embedded_alloc::Heap;
+use keycode::{KeyMap, KeyMappingId, KeyState, KeyboardState};
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 mod write;
 use write::write;

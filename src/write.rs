@@ -1,5 +1,4 @@
 use core::sync::atomic::{AtomicBool, Ordering};
-
 use defmt::*;
 use embassy_futures::join::join;
 use embassy_rp::bind_interrupts;
@@ -10,12 +9,8 @@ use embassy_sync::channel::Receiver;
 use embassy_usb::class::hid::{HidReaderWriter, ReportId, RequestHandler, State};
 use embassy_usb::control::OutResponse;
 use embassy_usb::{Builder, Config, Handler};
-use embedded_alloc::Heap;
 use usbd_hid::descriptor::{KeyboardReport, SerializedDescriptor};
 use {defmt_rtt as _, panic_probe as _};
-
-#[global_allocator]
-static HEAP: Heap = Heap::empty();
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => InterruptHandler<USB>;
