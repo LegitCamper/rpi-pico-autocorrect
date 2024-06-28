@@ -1,64 +1,57 @@
-//! Blinks the LED on a Pico board
-//!
-//! This will blink an LED attached to GP25, which is the pin the Pico uses for the on-board LED.
 #![no_std]
 #![no_main]
 
-// Provide an alias for our BSP so we can switch targets quickly.
-// Uncomment the BSP you included in Cargo.toml, the rest of the code does not need to change.
-use rp_pico as bsp;
-// use sparkfun_pro_micro_rp2040 as bsp;
+use defmt::*;
+use embassy_executor::Spawner;
+use embassy_sync::blocking_mutex::raw::NoopRawMutex;
+use embassy_sync::channel::{Channel, Sender};
+use keycode::{KeyMap, KeyMappingId, KeyState, KeyboardState};
 
-pub mod device;
-use device::{Device, KeyboardReport};
+mod write;
+use write::write;
 
 // this imports the TREE
-use embedded_bktree::Node;
-include!(concat!(env!("OUT_DIR"), "/tree.rs"));
+// use embedded_bktree::Node;
+// include!(concat!(env!("OUT_DIR"), "/tree.rs"));
 
-#[bsp::entry]
-fn main() -> ! {
-    let mut device = Device::new();
+#[embassy_executor::main]
+async fn main(spawner: Spawner) -> ! {
+    let p = embassy_rp::init(Default::default());
 
+    // this is the communication between the reader and writer
+    static mut WRITER_CHANNEL: Channel<NoopRawMutex, [u8; 6], 64> = Channel::new();
+
+    // spawn usb writer (emulates keyboard)
+    spawner
+        .spawn(write(p.USB, unsafe { WRITER_CHANNEL.receiver() }))
+        .unwrap();
+
+    // spawn usb keyboard reader
+    // spawner.spawn(write(p.USB)).unwrap();
+
+    let mut keyboard_state = KeyboardState::new(None);
+    let mut channel = unsafe { WRITER_CHANNEL.sender() };
     loop {
-        device
-            .push_keyboard_report(device.get_key_rep(0x0B))
-            .unwrap(); // H
-        device
-            .push_keyboard_report(device.get_key_rep(0x08))
-            .unwrap(); // E
-        device
-            .push_keyboard_report(device.get_key_rep(0x0F))
-            .unwrap(); // L
-        device
-            .push_keyboard_report(device.get_key_rep(0x0F))
-            .unwrap(); // L
-        device
-            .push_keyboard_report(device.get_key_rep(0x12))
-            .unwrap(); // O
-        device
-            .push_keyboard_report(device.get_key_rep(0x2C))
-            .unwrap(); // _
-        device
-            .push_keyboard_report(device.get_key_rep(0x1A))
-            .unwrap(); // W
-        device
-            .push_keyboard_report(device.get_key_rep(0x12))
-            .unwrap(); // O
-        device
-            .push_keyboard_report(device.get_key_rep(0x15))
-            .unwrap(); // R
-        device
-            .push_keyboard_report(device.get_key_rep(0x0F))
-            .unwrap(); // L
-        device
-            .push_keyboard_report(device.get_key_rep(0x07))
-            .unwrap(); // D
-        for _ in 0..11 {
-            device
-                .push_keyboard_report(device.get_key_rep(0x2A))
-                .unwrap(); // Back
-        }
-        device.blink_led_once(3000);
+        send_single_unmodded_key(
+            &mut channel,
+            &mut keyboard_state,
+            KeyMap::from(KeyMappingId::UsH),
+        )
+        .await;
     }
+}
+
+async fn send_single_unmodded_key(
+    channel: &mut Sender<'static, NoopRawMutex, [u8; 6], 64>,
+    state: &mut KeyboardState,
+    key: KeyMap,
+) {
+    state.update_key(key, KeyState::Pressed);
+    channel
+        .send(state.usb_input_report().try_into().unwrap())
+        .await;
+    state.update_key(key, KeyState::Released);
+    channel
+        .send(state.usb_input_report().try_into().unwrap())
+        .await;
 }

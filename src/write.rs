@@ -1,27 +1,30 @@
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use super::bsp::bind_interrupts;
-use super::bsp::gpio::{Input, Pull};
-use super::bsp::peripherals::USB;
-use super::bsp::usb::{Driver, InterruptHandler};
 use defmt::*;
-use embassy_executor::Spawner;
 use embassy_futures::join::join;
+use embassy_rp::bind_interrupts;
+use embassy_rp::peripherals::USB;
+use embassy_rp::usb::{Driver, InterruptHandler};
+use embassy_sync::blocking_mutex::raw::NoopRawMutex;
+use embassy_sync::channel::Receiver;
 use embassy_usb::class::hid::{HidReaderWriter, ReportId, RequestHandler, State};
 use embassy_usb::control::OutResponse;
 use embassy_usb::{Builder, Config, Handler};
-
+use embedded_alloc::Heap;
 use usbd_hid::descriptor::{KeyboardReport, SerializedDescriptor};
 use {defmt_rtt as _, panic_probe as _};
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => InterruptHandler<USB>;
 });
 
-async fn main(_spawner: Spawner) {
-    let p = embassy_rp::init(Default::default());
+#[embassy_executor::task]
+pub async fn write(usb: USB, channel: Receiver<'static, NoopRawMutex, [u8; 6], 64>) {
     // Create the driver, from the HAL.
-    let driver = Driver::new(p.USB, Irqs);
+    let driver = Driver::new(usb, Irqs);
 
     // Create embassy-usb Config
     let mut config = Config::new(0xc0de, 0xcafe);
@@ -69,40 +72,19 @@ async fn main(_spawner: Spawner) {
     // Run the USB device.
     let usb_fut = usb.run();
 
-    // Set up the signal pin that will be used to trigger the keyboard.
-    let mut signal_pin = Input::new(p.PIN_16, Pull::None);
-
-    // Enable the schmitt trigger to slightly debounce.
-    signal_pin.set_schmitt(true);
-
     let (reader, mut writer) = hid.split();
 
-    // Do stuff with the class!
     let in_fut = async {
         loop {
-            info!("Waiting for HIGH on pin 16");
-            signal_pin.wait_for_high().await;
-            info!("HIGH DETECTED");
-            // Create a report with the A key pressed. (no shift modifier)
+            let msg = channel.receive().await;
             let report = KeyboardReport {
-                keycodes: [4, 0, 0, 0, 0, 0],
-                leds: 0,
                 modifier: 0,
                 reserved: 0,
+                leds: 0,
+                keycodes: msg,
             };
+
             // Send the report.
-            match writer.write_serialize(&report).await {
-                Ok(()) => {}
-                Err(e) => warn!("Failed to send report: {:?}", e),
-            };
-            signal_pin.wait_for_low().await;
-            info!("LOW DETECTED");
-            let report = KeyboardReport {
-                keycodes: [0, 0, 0, 0, 0, 0],
-                leds: 0,
-                modifier: 0,
-                reserved: 0,
-            };
             match writer.write_serialize(&report).await {
                 Ok(()) => {}
                 Err(e) => warn!("Failed to send report: {:?}", e),
