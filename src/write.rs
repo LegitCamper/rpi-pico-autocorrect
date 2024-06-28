@@ -76,6 +76,7 @@ pub async fn write(usb: USB, channel: Receiver<'static, NoopRawMutex, [u8; 6], 6
 
     let in_fut = async {
         loop {
+            info!("Got new report");
             let msg = channel.receive().await;
             let report = KeyboardReport {
                 modifier: 0,

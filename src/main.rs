@@ -5,7 +5,8 @@ use defmt::*;
 use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::NoopRawMutex;
 use embassy_sync::channel::{Channel, Sender};
-use keycode::{KeyMap, KeyMappingId, KeyState, KeyboardState};
+use embassy_time::Timer;
+use keycode::{KeyMap, KeyMapping, KeyMappingId, KeyState, KeyboardState};
 
 mod write;
 use write::write;
@@ -32,12 +33,29 @@ async fn main(spawner: Spawner) -> ! {
     let mut keyboard_state = KeyboardState::new(None);
     let mut channel = unsafe { WRITER_CHANNEL.sender() };
     loop {
-        send_single_unmodded_key(
-            &mut channel,
-            &mut keyboard_state,
-            KeyMap::from(KeyMappingId::UsH),
-        )
-        .await;
+        hello_world(&mut channel, &mut keyboard_state).await;
+    }
+}
+
+async fn hello_world(
+    channel: &mut Sender<'static, NoopRawMutex, [u8; 6], 64>,
+    state: &mut KeyboardState,
+) {
+    Timer::after_secs(1).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsH)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsE)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsL)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsL)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsO)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::Space)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsW)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsO)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsR)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsL)).await;
+    send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::UsD)).await;
+    Timer::after_secs(1).await;
+    for _ in 0..12 {
+        send_single_unmodded_key(channel, state, KeyMap::from(KeyMappingId::Backspace)).await;
     }
 }
 
@@ -48,10 +66,10 @@ async fn send_single_unmodded_key(
 ) {
     state.update_key(key, KeyState::Pressed);
     channel
-        .send(state.usb_input_report().try_into().unwrap())
+        .send(state.usb_input_report()[2..].try_into().unwrap())
         .await;
     state.update_key(key, KeyState::Released);
     channel
-        .send(state.usb_input_report().try_into().unwrap())
+        .send(state.usb_input_report()[2..].try_into().unwrap())
         .await;
 }
