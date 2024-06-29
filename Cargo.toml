@@ -1,59 +1,8 @@
-[package]
-edition = "2021"
-name = "rpi-pico-autocorrect"
-version = "0.1.0"
-license = "MIT OR Apache-2.0"
+[workspace]
+members = ["host", "client", "shared"]
 
 [toolchain]
 channel = "nightly"
-
-[dependencies]
-embassy-executor = { version = "0.5.0", features = [
-  "task-arena-size-98304",
-  "arch-cortex-m",
-  "executor-thread",
-  "executor-interrupt",
-  "defmt",
-  "integrated-timers",
-] }
-cortex-m = "0.7"
-cortex-m-rt = "0.7"
-embedded-alloc = { version = "0.5.1", feature = "llff" }
-critical-section = { version = "1.0.0" }
-defmt = "0.3"
-defmt-rtt = "0.4"
-panic-probe = { version = "0.3", features = ["print-defmt"] }
-embassy-rp = { version = "0.1.0", features = [
-  "defmt",
-  "time-driver",
-  "critical-section-impl",
-] }
-embassy-usb = { version = "0.2.0", features = ["defmt"] }
-embassy-embedded-hal = { version = "0.1.0", features = ["defmt"] }
-embassy-sync = { version = "0.6.0", features = ["defmt"] }
-embassy-time = "0.3.1"
-usbd-hid = "0.7.0"
-embassy-futures = "0.1.1"
-keycode = "0.4.0"
-
-# but you can use any BSP. Uncomment this to use the pro_micro_rp2040 BSP instead
-# sparkfun-pro-micro-rp2040 = "0.8"
-
-# If you're not going to use a Board Support Package you'll need these:
-# rp2040-hal = { version="0.10", features=["rt", "critical-section-impl"] }
-# rp2040-boot2 = "0.2"
-
-# embedded-bktree = { git = "https://github.com/LegitCamper/embedded-bktree", features = [
-#   "read",
-# ] }
-
-[build-dependencies]
-embedded-bktree = { git = "https://github.com/LegitCamper/embedded-bktree", features = [
-  "write",
-] }
-
-[dev-dependencies]
-embedded-test = { version = "0.4.0", features = ["init-log"] }
 
 # cargo build/run
 [profile.dev]

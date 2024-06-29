@@ -10,7 +10,6 @@ use embassy_usb::class::hid::{HidReaderWriter, ReportId, RequestHandler, State};
 use embassy_usb::control::OutResponse;
 use embassy_usb::{Builder, Config, Handler};
 use usbd_hid::descriptor::{KeyboardReport, SerializedDescriptor};
-use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
     USBCTRL_IRQ => InterruptHandler<USB>;

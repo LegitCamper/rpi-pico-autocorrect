@@ -1,0 +1,9 @@
+[package]
+name = "shared"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.203", default-features = false }
+postcard = "1.0.0"
+usbd-hid = "0.7.0"
